@@ -25,23 +25,24 @@ const portableTextComponents: PortableTextComponents = {
         ),
         normal: ({ children }) => <p className="text-gray-300 leading-relaxed mb-6">{children}</p>,
       },
-  types: {
-    image: ({ value }: { value: any }) => {
-      if (!value?.asset?._ref) {
-        return null;
-      }
-      return (
-        <div className="relative w-full my-8 aspect-video rounded-lg overflow-hidden bg-gray-900">
-          <Image
-            src={urlFor(value).url()}
-            alt={value.alt || 'Case study image'}
-            fill
-            className="object-contain"
-          />
-        </div>
-      );
-    },
-  },
+      types: {
+        image: ({ value }: { value: any }) => {
+          if (!value?.asset?._ref) {
+            return null;
+          }
+          return (
+            <div className="relative w-full my-8 rounded-lg overflow-hidden">
+              <Image
+                src={urlFor(value).url()}
+                alt={value.alt || 'Case study image'}
+                width={1200}
+                height={800}
+                className="w-full h-auto object-cover rounded-lg"
+              />
+            </div>
+          );
+        },
+      },
 };
 
 // GROQ query to fetch a case study by its slug
