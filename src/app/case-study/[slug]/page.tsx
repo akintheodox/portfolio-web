@@ -9,7 +9,7 @@ function urlFor(source: any) {
   return builder.image(source);
 }
 
-// Custom components to tell PortableText how to render special blocks like images
+// Custom components for PortableText to render images and GIFs
 const portableTextComponents: PortableTextComponents = {
   types: {
     image: ({ value }: { value: any }) => {
@@ -30,26 +30,14 @@ const portableTextComponents: PortableTextComponents = {
   },
 };
 
-// Custom components to tell PortableText how to render special blocks like images
-const portableTextComponents: PortableTextComponents = {
-  types: {
-    image: ({ value }: { value: any }) => {
-      if (!value?.asset?._ref) {
-        return null;
-      }
-      return (
-        <div className="relative w-full my-8 aspect-video rounded-lg overflow-hidden bg-gray-900">
-          <Image
-            src={urlFor(value).url()}
-            alt={value.alt || 'Case study image'}
-            fill
-            className="object-contain"
-          />
-        </div>
-      );
-    },
-  },
-};
+// GROQ query to fetch a case study by its slug
+const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
+  title,
+  role,
+  deliverables,
+  coverImage,
+  body
+}`;
 
 export default async function CaseStudyPage({
   params,
@@ -59,7 +47,6 @@ export default async function CaseStudyPage({
   const { slug } = await params;
   const caseStudy = await client.fetch(CASE_STUDY_QUERY, { slug });
 
-  // If the URL slug doesn't exist in Sanity, show a 404 page
   if (!caseStudy) {
     notFound();
   }
@@ -107,16 +94,12 @@ export default async function CaseStudyPage({
         </div>
       )}
       
-      {/* 
-        Content Area: 
-        This is where we will eventually render your rich narrative content, 
-        Sanity Portable Text, and 3D/Manga media galleries. 
-      */}
+      {/* Rich Content Body with PortableText */}
       {caseStudy.body && (
-  <section className="max-w-3xl mx-auto prose prose-invert">
-    <PortableText value={caseStudy.body} components={portableTextComponents} />
-  </section>
-)}
+        <section className="max-w-3xl mx-auto prose prose-invert">
+          <PortableText value={caseStudy.body} components={portableTextComponents} />
+        </section>
+      )}
     </main>
   );
 }
