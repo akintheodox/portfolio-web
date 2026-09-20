@@ -2,23 +2,33 @@ import { client } from "@/sanity/client";
 import Image from "next/image";
 import imageUrlBuilder from "@sanity/image-url";
 import { notFound } from "next/navigation";
-import { PortableText } from '@portabletext/react';
+import { PortableText, PortableTextComponents } from '@portabletext/react';
 
 const builder = imageUrlBuilder(client);
 function urlFor(source: any) {
   return builder.image(source);
 }
 
-// GROQ query to fetch a case study by its slug
-const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
-  title,
-  role,
-  deliverables,
-  coverImage,
-  body
-}`;
-import Image from 'next/image';
-import { PortableText, PortableTextComponents } from '@portabletext/react';
+// Custom components to tell PortableText how to render special blocks like images
+const portableTextComponents: PortableTextComponents = {
+  types: {
+    image: ({ value }: { value: any }) => {
+      if (!value?.asset?._ref) {
+        return null;
+      }
+      return (
+        <div className="relative w-full my-8 aspect-video rounded-lg overflow-hidden bg-gray-900">
+          <Image
+            src={urlFor(value).url()}
+            alt={value.alt || 'Case study image'}
+            fill
+            className="object-contain"
+          />
+        </div>
+      );
+    },
+  },
+};
 
 // Custom components to tell PortableText how to render special blocks like images
 const portableTextComponents: PortableTextComponents = {
