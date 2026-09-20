@@ -22,49 +22,64 @@ export default async function CaseStudyPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const project = await client.fetch(CASE_STUDY_QUERY, { slug });
+  const caseStudy = await client.fetch(CASE_STUDY_QUERY, { slug });
 
-  if (!project) {
+  // If the URL slug doesn't exist in Sanity, show a 404 page
+  if (!caseStudy) {
     notFound();
   }
 
-  // Triggering a fresh Vercel build for the new case study
   return (
-    <main className="max-w-4xl mx-auto px-6 py-16">
-      <h1 className="text-4xl font-bold tracking-tight mb-4">{project.title}</h1>
-      {project.role && (
-        <p className="text-lg text-neutral-500 mb-6">{project.role}</p>
-      )}
-
-      {project.deliverables && project.deliverables.length > 0 && (
-        <div className="mb-10">
-          <h2 className="text-sm uppercase tracking-wider text-neutral-400 font-semibold mb-3">
-            Deliverables
-          </h2>
-          <ul className="flex flex-wrap gap-2">
-            {project.deliverables.map((item: string, index: number) => (
-              <li
-                key={index}
-                className="bg-neutral-100 text-neutral-800 text-sm px-3 py-1 rounded-full"
-              >
-                {item}
-              </li>
-            ))}
-          </ul>
+    <main className="w-full max-w-6xl mx-auto px-6 py-20 text-left">
+      {/* Editorial Hero Header */}
+      <header className="mb-16">
+        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8">
+          {caseStudy.title}
+        </h1>
+        
+        {/* Meta Data: Role & Deliverables */}
+        <div className="flex flex-col md:flex-row gap-12 text-gray-300 mt-12 border-t border-gray-800 pt-8">
+          <div>
+            <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-3 font-semibold">Role</h3>
+            <p className="text-lg">{caseStudy.role}</p>
+          </div>
+          
+          {caseStudy.deliverables && caseStudy.deliverables.length > 0 && (
+            <div>
+              <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-3 font-semibold">Deliverables</h3>
+              <ul className="flex flex-wrap gap-2">
+                {caseStudy.deliverables.map((item: string, i: number) => (
+                  <li key={i} className="px-4 py-1.5 border border-gray-700 rounded-full text-sm">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
-      )}
+      </header>
 
-      {project.coverImage && (
-        <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-neutral-200">
+      {/* Cinematic Cover Image */}
+      {caseStudy.coverImage && (
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-24 bg-gray-900">
           <Image
-            src={urlFor(project.coverImage).width(1200).url()}
-            alt={project.title}
+            src={urlFor(caseStudy.coverImage).width(1920).height(1080).url()}
+            alt={`${caseStudy.title} cover image`}
             fill
             className="object-cover"
             priority
           />
         </div>
       )}
+      
+      {/* 
+        Content Area: 
+        This is where we will eventually render your rich narrative content, 
+        Sanity Portable Text, and 3D/Manga media galleries. 
+      */}
+      <section className="max-w-3xl mx-auto">
+         <p className="text-xl text-gray-400 text-center italic">Case study content goes here...</p>
+      </section>
     </main>
   );
 }
