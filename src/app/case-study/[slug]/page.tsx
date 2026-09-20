@@ -96,10 +96,10 @@ export default async function CaseStudyPage({
       
       {/* Rich Content Body with PortableText */}
       {caseStudy.body && (
-        <section className="max-w-3xl mx-auto prose prose-invert">
-          <PortableText value={caseStudy.body} components={portableTextComponents} />
-        </section>
-      )}
+  <section className="max-w-3xl mx-auto text-gray-200 space-y-6 leading-relaxed">
+    <PortableText value={caseStudy.body} components={portableTextComponents} />
+  </section>
+)}
     </main>
   );
 }
