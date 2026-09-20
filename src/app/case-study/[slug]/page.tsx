@@ -79,7 +79,7 @@ export default async function CaseStudyPage({
         This is where we will eventually render your rich narrative content, 
         Sanity Portable Text, and 3D/Manga media galleries. 
       */}
-      <{caseStudy.body && (
+      {caseStudy.body && (
   <section className="max-w-3xl mx-auto prose prose-invert">
     <PortableText value={caseStudy.body} />
   </section>
