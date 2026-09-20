@@ -11,6 +11,20 @@ function urlFor(source: any) {
 
 // Custom components for PortableText to render images and GIFs
 const portableTextComponents: PortableTextComponents = {
+    block: {
+        h1: ({ children }) => <h1 className="text-5xl font-bold tracking-tight mt-12 mb-6 text-white">{children}</h1>,
+        h2: ({ children }) => <h2 className="text-4xl font-bold tracking-tight mt-10 mb-5 text-white">{children}</h2>,
+        h3: ({ children }) => <h3 className="text-3xl font-semibold tracking-tight mt-8 mb-4 text-white">{children}</h3>,
+        h4: ({ children }) => <h4 className="text-2xl font-semibold tracking-tight mt-6 mb-3 text-white">{children}</h4>,
+        h5: ({ children }) => <h5 className="text-xl font-medium tracking-tight mt-6 mb-2 text-white">{children}</h5>,
+        h6: ({ children }) => <h6 className="text-lg font-medium tracking-tight mt-4 mb-2 text-gray-200">{children}</h6>,
+        blockquote: ({ children }) => (
+          <blockquote className="border-l-2 border-gray-500 pl-6 my-6 italic text-gray-300 text-lg">
+            {children}
+          </blockquote>
+        ),
+        normal: ({ children }) => <p className="text-gray-300 leading-relaxed mb-6">{children}</p>,
+      },
   types: {
     image: ({ value }: { value: any }) => {
       if (!value?.asset?._ref) {
