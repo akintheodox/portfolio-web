@@ -17,6 +17,29 @@ const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
   coverImage,
   body
 }`;
+import Image from 'next/image';
+import { PortableText, PortableTextComponents } from '@portabletext/react';
+
+// Custom components to tell PortableText how to render special blocks like images
+const portableTextComponents: PortableTextComponents = {
+  types: {
+    image: ({ value }: { value: any }) => {
+      if (!value?.asset?._ref) {
+        return null;
+      }
+      return (
+        <div className="relative w-full my-8 aspect-video rounded-lg overflow-hidden bg-gray-900">
+          <Image
+            src={urlFor(value).url()}
+            alt={value.alt || 'Case study image'}
+            fill
+            className="object-contain"
+          />
+        </div>
+      );
+    },
+  },
+};
 
 export default async function CaseStudyPage({
   params,
@@ -81,7 +104,7 @@ export default async function CaseStudyPage({
       */}
       {caseStudy.body && (
   <section className="max-w-3xl mx-auto prose prose-invert">
-    <PortableText value={caseStudy.body} />
+    <PortableText value={caseStudy.body} components={portableTextComponents} />
   </section>
 )}
     </main>
