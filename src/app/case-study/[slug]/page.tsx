@@ -2,6 +2,7 @@ import { client } from "@/sanity/client";
 import Image from "next/image";
 import imageUrlBuilder from "@sanity/image-url";
 import { notFound } from "next/navigation";
+import { PortableText } from '@portabletext/react';
 
 const builder = imageUrlBuilder(client);
 function urlFor(source: any) {
@@ -13,7 +14,8 @@ const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
   title,
   role,
   deliverables,
-  coverImage
+  coverImage,
+  body
 }`;
 
 export default async function CaseStudyPage({
@@ -77,9 +79,11 @@ export default async function CaseStudyPage({
         This is where we will eventually render your rich narrative content, 
         Sanity Portable Text, and 3D/Manga media galleries. 
       */}
-      <section className="max-w-3xl mx-auto">
-         <p className="text-xl text-gray-400 text-center italic">Case study content goes here...</p>
-      </section>
+      <{caseStudy.body && (
+  <section className="max-w-3xl mx-auto prose prose-invert">
+    <PortableText value={caseStudy.body} />
+  </section>
+)}
     </main>
   );
 }
