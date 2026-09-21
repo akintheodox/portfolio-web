@@ -7,8 +7,11 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function CanvasBoard({ assets }: { assets: any[] }) {
   const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  
+  // Reference to the horizontal scroll container
   const carouselRef = useRef<HTMLDivElement>(null);
 
+  // Escape key to close carousel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && selectedAsset) {
@@ -20,6 +23,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedAsset]);
 
+  // Lock body scroll when the carousel is open
   useEffect(() => {
     if (selectedAsset) {
       document.body.style.overflow = "hidden";
@@ -29,12 +33,15 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
     return () => { document.body.style.overflow = "auto"; };
   }, [selectedAsset]);
 
+  // Instantly scroll the carousel to the clicked item when opened
   useEffect(() => {
     if (selectedAsset && activeIndex !== null && carouselRef.current) {
+      // A tiny timeout ensures Framer Motion has mounted the DOM nodes first
       setTimeout(() => {
         const container = carouselRef.current;
         if (container && container.children[activeIndex]) {
           const target = container.children[activeIndex] as HTMLElement;
+          // Math to perfectly center the active item in the viewport
           const scrollPos = target.offsetLeft - (container.clientWidth / 2) + (target.clientWidth / 2);
           container.scrollTo({ left: scrollPos, behavior: 'instant' });
         }
@@ -45,35 +52,30 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
   const renderMedia = (item: any, isExpanded: boolean = false) => {
     const isVideo = item.mediaType === 'video' || (item.externalUrl && item.externalUrl.match(/\.(mp4|webm|mov)$/i));
     
-    // THE MAGIC: 
-    // Grid: Fixed heights (220px to 380px depending on screen) and 'w-auto'. The width shapes itself naturally!
-    // Expanded: Max constraints to ensure it never exceeds the screen size.
-    const gridClasses = "h-[220px] sm:h-[300px] lg:h-[380px] w-auto max-w-full object-cover transition-transform duration-500 hover:scale-105 rounded-2xl";
-    const expandedClasses = "w-auto h-auto max-w-[85vw] max-h-[75vh] object-contain drop-shadow-2xl rounded-2xl";
-    
-    const appliedClasses = isExpanded ? expandedClasses : gridClasses;
+    // CHANGED: object-cover is now object-contain to prevent cropping
+    const mediaClasses = isExpanded 
+      ? "w-auto max-h-[70vh] object-contain drop-shadow-2xl rounded-2xl" 
+      : "w-full h-full aspect-square object-contain transition-transform duration-500 hover:scale-105 rounded-2xl"; 
 
     if (item.assetSource === 'external' && item.externalUrl) {
       if (isVideo) {
-        return <video src={item.externalUrl} autoPlay muted loop playsInline draggable={false} className={appliedClasses} />;
+        return <video src={item.externalUrl} autoPlay muted loop playsInline draggable={false} className={mediaClasses} />;
       }
-      return <img src={item.externalUrl} alt={item.caption || 'Gallery item'} loading="lazy" draggable={false} className={appliedClasses} />;
+      return <img src={item.externalUrl} alt={item.caption || 'Gallery item'} loading="lazy" draggable={false} className={mediaClasses} />;
     }
     
     if (item.assetSource === 'sanity' && item.image?.asset) {
-      // We pull the real dimensions from your Sanity metadata so Next.js knows the exact aspect ratio!
-      const w = item.image.asset.metadata?.dimensions?.width || 1200;
-      const h = item.image.asset.metadata?.dimensions?.height || 1200;
-      
       return (
-        <Image 
-          src={item.image.asset.url} 
-          alt={item.caption || 'Gallery item'} 
-          width={w}
-          height={h}
-          draggable={false}
-          className={appliedClasses} 
-        />
+        <div className={`relative rounded-2xl overflow-hidden ${isExpanded ? 'w-[80vw] max-w-4xl h-[70vh]' : 'w-full h-full aspect-square'}`}>
+          <Image 
+            src={item.image.asset.url} 
+            alt={item.caption || 'Gallery item'} 
+            fill 
+            draggable={false}
+            // CHANGED: object-cover is now object-contain
+            className={`object-contain ${!isExpanded && 'transition-transform duration-500 hover:scale-105'}`} 
+          />
+        </div>
       );
     }
     return null;
@@ -97,23 +99,22 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
   };
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col bg-[#050505] text-white pt-32 pb-12 px-6 md:px-12 overflow-x-hidden">
+    <div className="relative w-full min-h-screen flex flex-col bg-[#050505] text-white pt-32 pb-12 px-6 md:px-12">
       
       <div className="flex-grow"></div>
 
-      {/* State 1: The Falling Grid - Now using items-end to stack flat on the floor */}
+      {/* State 1: The Falling Grid */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="mt-auto flex flex-wrap-reverse gap-4 md:gap-8 w-full max-w-[2400px] mx-auto justify-start items-end"
+        className="mt-auto flex flex-wrap-reverse gap-6 md:gap-10 w-full max-w-[2400px] mx-auto justify-start"
       >
         {assets.map((item: any, index: number) => (
           <motion.div 
             key={`grid-${item._key}-${index}`} 
             variants={itemVariants}
-            // All the complicated math is gone. The motion wrapper simply shrink-wraps around the flexible image!
-            className="relative cursor-pointer rounded-2xl overflow-hidden drop-shadow-lg" 
+            className="relative flex items-center justify-center cursor-pointer rounded-2xl overflow-hidden drop-shadow-lg aspect-square w-[calc(50%-12px)] sm:w-[calc(33.333%-16px)] md:w-[calc(25%-30px)] lg:w-[calc(20%-32px)] xl:w-[calc(16.666%-33.33px)]" 
             onClick={() => {
               setSelectedAsset(item);
               setActiveIndex(index);
@@ -134,6 +135,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center bg-[#050505]/95 backdrop-blur-sm"
           >
+            {/* Added ref={carouselRef} here so we can control the scroll position */}
             <div 
               ref={carouselRef}
               className="w-full h-full overflow-x-auto overflow-y-hidden flex items-center snap-x snap-mandatory px-[20vw] hide-scrollbar scroll-smooth"
