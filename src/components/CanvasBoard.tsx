@@ -8,7 +8,6 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
   const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  // Escape key to close carousel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && selectedAsset) {
@@ -20,7 +19,6 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedAsset]);
 
-  // Lock body scroll when the carousel is open
   useEffect(() => {
     if (selectedAsset) {
       document.body.style.overflow = "hidden";
@@ -75,20 +73,23 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
     show: { 
       y: 0, 
       opacity: 1, 
-      // The TypeScript fix is right here:
       transition: { type: "spring" as const, bounce: 0.4, duration: 0.8 } 
     },
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-[#050505] text-white pt-32 pb-24 px-6 md:px-12">
+    // Converted the main wrapper to a flex column that allows content to be pushed down
+    <div className="relative w-full min-h-screen flex flex-col bg-[#050505] text-white pt-32 pb-12 px-6 md:px-12">
       
-      {/* State 1: The Falling Grid */}
+      {/* Invisible spacer that actively pushes the grid to the bottom of the viewport */}
+      <div className="flex-grow"></div>
+
+      {/* State 1: The Falling Grid - Now anchored to the bottom */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-10 w-full max-w-[2400px] mx-auto"
+        className="mt-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-10 w-full max-w-[2400px] mx-auto content-end"
       >
         {assets.map((item: any, index: number) => (
           <motion.div 
@@ -146,7 +147,6 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
               })}
             </div>
 
-            {/* Back to Grid Button */}
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
               <button 
                 onClick={() => {
