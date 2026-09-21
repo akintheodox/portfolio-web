@@ -1,6 +1,7 @@
 import { client } from "@/sanity/client";
 import Image from "next/image";
 
+export const revalidate = 30; // Revalidates the cache every 30 seconds
 // Notice we grab the Sanity metadata dimensions to prevent layout shifts!
 const GALLERY_QUERY = `*[_type == "galleryFolder"] | order(_createdAt desc) {
   _id,
