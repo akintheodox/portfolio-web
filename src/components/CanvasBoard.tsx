@@ -72,18 +72,16 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
               animate={controls}
               dragConstraints={containerRef}
               dragElastic={0.2}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[3000px] h-[3000px] cursor-grab active:cursor-grabbing flex flex-wrap content-center justify-center gap-16 p-20"
+              // Switched to a strict 8-column grid with defined gaps and centered items
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[3200px] h-[2400px] cursor-grab active:cursor-grabbing grid grid-cols-8 gap-x-12 gap-y-20 p-20 place-content-center place-items-center"
             >
-              {/* 
-                  To create the "never-ending" feel without actual infinite looping (which is very complex), 
-                  we duplicate the assets array a few times to create a massive field of items.
-              */}
-              {[...assets, ...assets, ...assets, ...assets].map((item: any, index: number) => (
+              {[...assets, ...assets, ...assets, ...assets, ...assets, ...assets].map((item: any, index: number) => (
                 <motion.div 
                   key={`${item._key}-${index}`} 
-                  className="relative flex items-center justify-center"
+                  // Forced bounding box for the cell to maintain perfect grid alignment
+                  className="relative flex items-center justify-center w-[260px] h-[260px]" 
                   onClick={() => setSelectedAsset(item)}
-                  layoutId={`media-${item._key}`} // Magic layout animation
+                  layoutId={`media-${item._key}`}
                 >
                   {renderMedia(item)}
                 </motion.div>
