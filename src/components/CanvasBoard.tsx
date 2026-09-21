@@ -52,8 +52,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
             alt={item.caption || 'Gallery item'} 
             fill 
             draggable={false}
-            // FIXED: Using a ternary operator to prevent TypeScript boolean errors
-            className={`object-cover ${!isExpanded ? 'transition-transform duration-500 hover:scale-105' : ''}`} 
+            className={`object-cover ${!isExpanded && 'transition-transform duration-500 hover:scale-105'}`} 
           />
         </div>
       );
@@ -65,7 +64,9 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.08 },
+      transition: {
+        staggerChildren: 0.08, 
+      },
     },
   };
 
@@ -74,7 +75,8 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
     show: { 
       y: 0, 
       opacity: 1, 
-      transition: { type: "spring", bounce: 0.4, duration: 0.8 } 
+      // The TypeScript fix is right here:
+      transition: { type: "spring" as const, bounce: 0.4, duration: 0.8 } 
     },
   };
 
@@ -115,8 +117,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
           >
             <div className="w-full h-full overflow-x-auto overflow-y-hidden flex items-center snap-x snap-mandatory px-[20vw] hide-scrollbar">
               {assets.map((item: any, index: number) => {
-                // FIXED: Added optional chaining (?.) to selectedAsset to satisfy TypeScript
-                const isSelected = selectedAsset?._key === item._key && activeIndex === index;
+                const isSelected = selectedAsset._key === item._key && activeIndex === index;
                 
                 return (
                   <div 
@@ -145,6 +146,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
               })}
             </div>
 
+            {/* Back to Grid Button */}
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2">
               <button 
                 onClick={() => {
