@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function CanvasBoard({ assets }: { assets: any[] }) {
   const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  
+  // Reference to the horizontal scroll container
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   // Escape key to close carousel
   useEffect(() => {
@@ -30,12 +33,29 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
     return () => { document.body.style.overflow = "auto"; };
   }, [selectedAsset]);
 
+  // Instantly scroll the carousel to the clicked item when opened
+  useEffect(() => {
+    if (selectedAsset && activeIndex !== null && carouselRef.current) {
+      // A tiny timeout ensures Framer Motion has mounted the DOM nodes first
+      setTimeout(() => {
+        const container = carouselRef.current;
+        if (container && container.children[activeIndex]) {
+          const target = container.children[activeIndex] as HTMLElement;
+          // Math to perfectly center the active item in the viewport
+          const scrollPos = target.offsetLeft - (container.clientWidth / 2) + (target.clientWidth / 2);
+          container.scrollTo({ left: scrollPos, behavior: 'instant' });
+        }
+      }, 10);
+    }
+  }, [selectedAsset, activeIndex]);
+
   const renderMedia = (item: any, isExpanded: boolean = false) => {
     const isVideo = item.mediaType === 'video' || (item.externalUrl && item.externalUrl.match(/\.(mp4|webm|mov)$/i));
     
+    // CHANGED: object-cover is now object-contain to prevent cropping
     const mediaClasses = isExpanded 
       ? "w-auto max-h-[70vh] object-contain drop-shadow-2xl rounded-2xl" 
-      : "w-full h-full aspect-square object-cover transition-transform duration-500 hover:scale-105 rounded-2xl"; 
+      : "w-full h-full aspect-square object-contain transition-transform duration-500 hover:scale-105 rounded-2xl"; 
 
     if (item.assetSource === 'external' && item.externalUrl) {
       if (isVideo) {
@@ -52,7 +72,8 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
             alt={item.caption || 'Gallery item'} 
             fill 
             draggable={false}
-            className={`object-cover ${!isExpanded && 'transition-transform duration-500 hover:scale-105'}`} 
+            // CHANGED: object-cover is now object-contain
+            className={`object-contain ${!isExpanded && 'transition-transform duration-500 hover:scale-105'}`} 
           />
         </div>
       );
@@ -64,9 +85,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.08, 
-      },
+      transition: { staggerChildren: 0.08 },
     },
   };
 
@@ -82,10 +101,9 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
   return (
     <div className="relative w-full min-h-screen flex flex-col bg-[#050505] text-white pt-32 pb-12 px-6 md:px-12">
       
-      {/* Invisible spacer that actively pushes the grid to the bottom of the viewport */}
       <div className="flex-grow"></div>
 
-      {/* State 1: The Falling Grid - Flex Wrap Reverse for Bottom-Up Stacking */}
+      {/* State 1: The Falling Grid */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -108,7 +126,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
         ))}
       </motion.div>
 
-      {/* State 2: The Expanded Horizontal Carousel (OVERLAY) */}
+      {/* State 2: The Expanded Horizontal Carousel */}
       <AnimatePresence>
         {selectedAsset && (
           <motion.div 
@@ -117,7 +135,11 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center bg-[#050505]/95 backdrop-blur-sm"
           >
-            <div className="w-full h-full overflow-x-auto overflow-y-hidden flex items-center snap-x snap-mandatory px-[20vw] hide-scrollbar">
+            {/* Added ref={carouselRef} here so we can control the scroll position */}
+            <div 
+              ref={carouselRef}
+              className="w-full h-full overflow-x-auto overflow-y-hidden flex items-center snap-x snap-mandatory px-[20vw] hide-scrollbar scroll-smooth"
+            >
               {assets.map((item: any, index: number) => {
                 const isSelected = selectedAsset._key === item._key && activeIndex === index;
                 
