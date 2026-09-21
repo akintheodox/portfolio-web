@@ -8,6 +8,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
   const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+  // Escape key to close carousel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && selectedAsset) {
@@ -19,6 +20,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedAsset]);
 
+  // Lock body scroll when the carousel is open
   useEffect(() => {
     if (selectedAsset) {
       document.body.style.overflow = "hidden";
@@ -78,24 +80,23 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
   };
 
   return (
-    // Converted the main wrapper to a flex column that allows content to be pushed down
     <div className="relative w-full min-h-screen flex flex-col bg-[#050505] text-white pt-32 pb-12 px-6 md:px-12">
       
       {/* Invisible spacer that actively pushes the grid to the bottom of the viewport */}
       <div className="flex-grow"></div>
 
-      {/* State 1: The Falling Grid - Now anchored to the bottom */}
+      {/* State 1: The Falling Grid - Flex Wrap Reverse for Bottom-Up Stacking */}
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="mt-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-10 w-full max-w-[2400px] mx-auto content-end"
+        className="mt-auto flex flex-wrap-reverse gap-6 md:gap-10 w-full max-w-[2400px] mx-auto justify-start"
       >
         {assets.map((item: any, index: number) => (
           <motion.div 
             key={`grid-${item._key}-${index}`} 
             variants={itemVariants}
-            className="relative flex items-center justify-center cursor-pointer rounded-2xl overflow-hidden drop-shadow-lg" 
+            className="relative flex items-center justify-center cursor-pointer rounded-2xl overflow-hidden drop-shadow-lg aspect-square w-[calc(50%-12px)] sm:w-[calc(33.333%-16px)] md:w-[calc(25%-30px)] lg:w-[calc(20%-32px)] xl:w-[calc(16.666%-33.33px)]" 
             onClick={() => {
               setSelectedAsset(item);
               setActiveIndex(index);
