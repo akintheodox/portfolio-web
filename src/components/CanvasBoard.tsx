@@ -13,7 +13,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "r" && !selectedAsset) {
-        controls.start({ x: 0, y: 0 });
+        controls.start({ x: 0, y: 0, transition: { type: "spring", stiffness: 100 } });
       }
       if (e.key === "Escape" && selectedAsset) {
         setSelectedAsset(null);
@@ -23,30 +23,31 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [controls, selectedAsset]);
 
-  // A helper to render the media consistently
+  // Refined Media Renderer
   const renderMedia = (item: any, isExpanded: boolean = false) => {
     const isVideo = item.mediaType === 'video' || (item.externalUrl && item.externalUrl.match(/\.(mp4|webm|mov)$/i));
     
-    // Classes change based on state: fixed size for grid, responsive for expanded
+    // ADDED: rounded-2xl, overflow-hidden, and pointer-events-none (for grid) to stop ghost dragging
     const mediaClasses = isExpanded 
-      ? "w-auto max-h-[70vh] object-contain drop-shadow-2xl" 
-      : "w-[240px] h-[240px] object-contain transition-transform duration-300 hover:scale-110 drop-shadow-lg";
+      ? "w-auto max-h-[70vh] object-contain drop-shadow-2xl rounded-2xl" 
+      : "w-[220px] h-[220px] object-cover transition-transform duration-300 hover:scale-105 drop-shadow-lg rounded-2xl pointer-events-none"; 
 
     if (item.assetSource === 'external' && item.externalUrl) {
       if (isVideo) {
-        return <video src={item.externalUrl} autoPlay muted loop playsInline className={mediaClasses} />;
+        return <video src={item.externalUrl} autoPlay muted loop playsInline draggable={false} className={mediaClasses} />;
       }
-      return <img src={item.externalUrl} alt={item.caption || 'Gallery item'} loading="lazy" className={mediaClasses} />;
+      return <img src={item.externalUrl} alt={item.caption || 'Gallery item'} loading="lazy" draggable={false} className={mediaClasses} />;
     }
     
     if (item.assetSource === 'sanity' && item.image?.asset) {
       return (
-        <div className={`relative ${isExpanded ? 'w-[80vw] max-w-4xl h-[70vh]' : 'w-[240px] h-[240px]'}`}>
+        <div className={`relative rounded-2xl overflow-hidden ${isExpanded ? 'w-[80vw] max-w-4xl h-[70vh]' : 'w-[220px] h-[220px] pointer-events-none'}`}>
           <Image 
             src={item.image.asset.url} 
             alt={item.caption || 'Gallery item'} 
             fill 
-            className={`object-contain ${!isExpanded && 'transition-transform duration-300 hover:scale-110 drop-shadow-lg'}`} 
+            draggable={false}
+            className={`object-cover ${!isExpanded && 'transition-transform duration-300 hover:scale-105 drop-shadow-lg'}`} 
           />
         </div>
       );
@@ -55,7 +56,7 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
   };
 
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-black text-white" ref={containerRef}>
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-[#050505] text-white" ref={containerRef}>
       
       {/* State 1: The Draggable Grid View */}
       <AnimatePresence>
@@ -71,15 +72,15 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
               drag
               animate={controls}
               dragConstraints={containerRef}
-              dragElastic={0.2}
-              // Switched to a strict 8-column grid with defined gaps and centered items
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[3200px] h-[2400px] cursor-grab active:cursor-grabbing grid grid-cols-8 gap-x-12 gap-y-20 p-20 place-content-center place-items-center"
+              dragElastic={0.1}
+              // REFINED GRID: Tighter canvas (2000px), uniform gaps, flex-center to act as a tight cluster
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[2000px] flex flex-wrap content-center justify-center gap-10 p-16 cursor-grab active:cursor-grabbing"
             >
-              {[...assets, ...assets, ...assets, ...assets, ...assets, ...assets].map((item: any, index: number) => (
+              {[...assets, ...assets, ...assets, ...assets].map((item: any, index: number) => (
                 <motion.div 
                   key={`${item._key}-${index}`} 
-                  // Forced bounding box for the cell to maintain perfect grid alignment
-                  className="relative flex items-center justify-center w-[260px] h-[260px]" 
+                  // ADDED: cursor-pointer to the wrapper since the image inside ignores pointers now
+                  className="relative flex items-center justify-center cursor-pointer" 
                   onClick={() => setSelectedAsset(item)}
                   layoutId={`media-${item._key}`}
                 >
@@ -107,24 +108,21 @@ export default function CanvasBoard({ assets }: { assets: any[] }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex items-center bg-black"
+            className="absolute inset-0 z-50 flex items-center bg-[#050505]"
           >
-            {/* The Horizontal Scroll Container */}
             <div className="w-full h-full overflow-x-auto overflow-y-hidden flex items-center snap-x snap-mandatory px-[20vw] hide-scrollbar">
-              {assets.map((item: any) => (
+              {assets.map((item: any, index: number) => (
                 <div 
-                  key={`carousel-${item._key}`} 
+                  key={`carousel-${item._key}-${index}`} 
                   className="min-w-[60vw] h-full flex flex-col items-center justify-center snap-center shrink-0"
                 >
                   <motion.div
-                    // Only animate the layout of the specifically clicked item
                     layoutId={item._key === selectedAsset._key ? `media-${item._key}` : undefined}
                     className="relative flex items-center justify-center"
                   >
                      {renderMedia(item, true)}
                   </motion.div>
                   
-                  {/* Optional Caption in expanded view */}
                   {item.caption && (
                     <motion.p 
                       initial={{ opacity: 0, y: 10 }}
