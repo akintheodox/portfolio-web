@@ -3,42 +3,32 @@ import Image from "next/image";
 import imageUrlBuilder from "@sanity/image-url";
 import { notFound } from "next/navigation";
 import { PortableText, PortableTextComponents } from '@portabletext/react';
-import HorizontalGalleryTrack from "@/components/HorizontalGallery"; 
+import HorizontalGalleryTrack from "@/components/HorizontalGallery";
 
 const builder = imageUrlBuilder(client);
 function urlFor(source: any) {
   return builder.image(source);
 }
 
-// Custom PortableText components for text formatting and clean media rendering
 const portableTextComponents: PortableTextComponents = {
   block: {
-    h1: ({ children }) => <h1 className="text-4xl font-bold tracking-tight mt-10 mb-6 text-white">{children}</h1>,
-    h2: ({ children }) => <h2 className="text-3xl font-bold tracking-tight mt-8 mb-4 text-white">{children}</h2>,
-    h3: ({ children }) => <h3 className="text-2xl font-semibold tracking-tight mt-6 mb-3 text-white">{children}</h3>,
-    h4: ({ children }) => <h4 className="text-xl font-semibold tracking-tight mt-6 mb-2 text-white">{children}</h4>,
-    h5: ({ children }) => <h5 className="text-lg font-medium tracking-tight mt-4 mb-2 text-white">{children}</h5>,
-    h6: ({ children }) => <h6 className="text-base font-medium tracking-tight mt-4 mb-2 text-gray-300">{children}</h6>,
-    blockquote: ({ children }) => (
-      <blockquote className="border-l-2 border-gray-500 pl-6 my-6 italic text-gray-300 text-lg">
-        {children}
-      </blockquote>
-    ),
-    normal: ({ children }) => <p className="text-gray-300 leading-relaxed mb-6">{children}</p>,
+    h1: ({ children }) => <h1 className="text-4xl md:text-5xl font-bold tracking-tight mt-16 mb-8 text-white">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-3xl md:text-4xl font-bold tracking-tight mt-16 mb-6 text-white">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-2xl font-semibold tracking-tight mt-12 mb-4 text-white">{children}</h3>,
+    normal: ({ children }) => <p className="text-gray-300 text-lg md:text-xl leading-relaxed mb-8 max-w-3xl">{children}</p>,
   },
   types: {
     image: ({ value }: { value: any }) => {
-      if (!value?.asset?._ref) {
-        return null;
-      }
+      if (!value?.asset?._ref) return null;
       return (
-        <div className="relative w-full my-8 overflow-hidden bg-[#050505] border border-white/10">
+        // Breaks out of the container to span edge-to-edge. No backgrounds or borders so PNGs float cleanly.
+        <div className="relative w-[100vw] left-1/2 -translate-x-1/2 my-24 px-4 md:px-12 flex justify-center">
           <Image
             src={urlFor(value).url()}
             alt={value.alt || 'Case study image'}
-            width={1200}
-            height={800}
-            className="w-full h-auto object-cover"
+            width={1920}
+            height={1080}
+            className="w-full h-auto max-h-[90vh] object-contain"
           />
         </div>
       );
@@ -50,9 +40,10 @@ const portableTextComponents: PortableTextComponents = {
   },
 };
 
-// Updated GROQ query to fetch modular sections and resolve gallery URLs
+// Added 'description' to the GROQ Query
 const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
   title,
+  description,
   role,
   deliverables,
   coverImage,
@@ -75,77 +66,79 @@ const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
   }
 }`;
 
-export default async function CaseStudyPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function CaseStudyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const caseStudy = await client.fetch(CASE_STUDY_QUERY, { slug });
 
-  if (!caseStudy) {
-    notFound();
-  }
+  if (!caseStudy) notFound();
 
   return (
-    <main className="w-full max-w-7xl mx-auto px-6 py-20 text-left">
-      {/* Editorial Hero Header */}
-      <header className="mb-20 max-w-4xl">
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8">
-          {caseStudy.title}
-        </h1>
-        
-        {/* Meta Data: Role & Deliverables */}
-        <div className="flex flex-col md:flex-row gap-12 text-gray-300 mt-12 border-t border-gray-800 pt-8">
-          <div>
-            <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-3 font-semibold">Role</h3>
-            <p className="text-lg">{caseStudy.role}</p>
-          </div>
-          
-          {caseStudy.deliverables && caseStudy.deliverables.length > 0 && (
-            <div>
-              <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-3 font-semibold">Deliverables</h3>
-              <ul className="flex flex-wrap gap-2">
-                {caseStudy.deliverables.map((item: string, i: number) => (
-                  <li key={i} className="px-4 py-1.5 border border-gray-700 text-sm">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* Cinematic Cover Image */}
+    <main className="w-full pb-32 text-left overflow-x-hidden">
+      
+      {/* 1. Full-Bleed Cinematic Cover Image */}
       {caseStudy.coverImage && (
-        <div className="relative w-full aspect-video overflow-hidden mb-28 bg-[#050505] border border-white/10">
+        <div className="relative w-full h-[60vh] md:h-screen mb-16 md:mb-32">
           <Image
-            src={urlFor(caseStudy.coverImage).width(1920).height(1080).url()}
-            alt={`${caseStudy.title} cover image`}
+            src={urlFor(caseStudy.coverImage).url()}
+            alt={`${caseStudy.title} cover`}
             fill
             className="object-cover"
             priority
           />
         </div>
       )}
-      
-      {/* Split-Screen Layout with Sticky Timeline */}
-      {caseStudy.sections && caseStudy.sections.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative">
+
+      {/* 2. Edge-to-Edge Typography Header */}
+      <header className="px-6 md:px-12 lg:px-24 mb-32">
+        <h1 className="text-[12vw] md:text-[9vw] font-bold tracking-tighter leading-none mb-16 text-white uppercase">
+          {caseStudy.title}
+        </h1>
+        
+        {/* Metadata Grid with new Description section */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 text-gray-300 border-t border-gray-800 pt-12">
+          <div className="md:col-span-3">
+            <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-4 font-bold">Role</h3>
+            <p className="text-lg">{caseStudy.role}</p>
+          </div>
           
-          {/* Left Column: Sticky Timeline Tracker */}
-          <aside className="lg:col-span-4">
+          <div className="md:col-span-3">
+            {caseStudy.deliverables && caseStudy.deliverables.length > 0 && (
+              <>
+                <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-4 font-bold">Deliverables</h3>
+                <ul className="flex flex-col gap-2">
+                  {caseStudy.deliverables.map((item: string, i: number) => (
+                    <li key={i} className="text-lg">{item}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+
+          <div className="md:col-span-6 lg:col-span-5 lg:col-start-8">
+            <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-4 font-bold">Project Description</h3>
+            {caseStudy.description ? (
+              <p className="text-lg md:text-xl leading-relaxed">{caseStudy.description}</p>
+            ) : (
+              <p className="text-sm text-gray-600 italic">Add a 'description' string field to your Sanity schema to populate this area.</p>
+            )}
+          </div>
+        </div>
+      </header>
+      
+      {/* 3. Split-Screen Narrative Layout */}
+      {caseStudy.sections && caseStudy.sections.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative px-6 md:px-12 lg:px-24">
+          
+          {/* Sticky Timeline */}
+          <aside className="lg:col-span-3">
             <div className="sticky top-28 space-y-4">
-              <h3 className="text-xs uppercase tracking-widest text-gray-500 font-semibold mb-6">
-                Index
-              </h3>
+              <h3 className="text-xs uppercase tracking-widest text-gray-500 font-bold mb-6">Index</h3>
               <nav className="flex flex-col space-y-3">
                 {caseStudy.sections.map((section: any, index: number) => (
                   <a
                     key={index}
                     href={`#${section.sectionId || index}`}
-                    className="text-gray-400 hover:text-white transition-colors text-sm font-medium tracking-wide py-1"
+                    className="text-gray-500 hover:text-white transition-colors text-sm font-medium py-1"
                   >
                     {section.sectionTitle}
                   </a>
@@ -154,17 +147,14 @@ export default async function CaseStudyPage({
             </div>
           </aside>
 
-          {/* Right Column: Narrative Content Sections */}
-          <div className="lg:col-span-8 space-y-24">
+          {/* Content */}
+          <div className="lg:col-span-9 space-y-32">
             {caseStudy.sections.map((section: any, index: number) => (
               <section 
                 key={index} 
                 id={section.sectionId || index}
-                className="scroll-mt-28 border-b border-gray-800/60 pb-20 last:border-none"
+                className="scroll-mt-28"
               >
-                <h2 className="text-2xl font-bold tracking-tight text-white mb-8">
-                  {section.sectionTitle}
-                </h2>
                 {section.content && (
                   <PortableText 
                     value={section.content} 
@@ -174,7 +164,6 @@ export default async function CaseStudyPage({
               </section>
             ))}
           </div>
-
         </div>
       )}
     </main>
