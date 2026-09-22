@@ -21,14 +21,15 @@ const portableTextComponents: PortableTextComponents = {
     image: ({ value }: { value: any }) => {
       if (!value?.asset?._ref) return null;
       return (
-        // Breaks out of the container to span edge-to-edge. No backgrounds or borders so PNGs float cleanly.
-        <div className="relative w-[100vw] left-1/2 -translate-x-1/2 my-24 px-4 md:px-12 flex justify-center">
+        // Added margins, contained the width, and clamped the max-height
+        <div className="relative w-full max-w-6xl mx-auto my-24 px-4 md:px-0 flex justify-center">
           <Image
             src={urlFor(value).url()}
             alt={value.alt || 'Case study image'}
             width={1920}
             height={1080}
-            className="w-full h-auto max-h-[90vh] object-contain"
+            // The max-h-[75vh] ensures the asset never dominates the entire viewport height
+            className="w-full h-auto max-h-[75vh] object-contain"
           />
         </div>
       );
@@ -40,7 +41,6 @@ const portableTextComponents: PortableTextComponents = {
   },
 };
 
-// Added 'description' to the GROQ Query
 const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
   title,
   description,
@@ -73,9 +73,10 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
   if (!caseStudy) notFound();
 
   return (
-    <main className="w-full pb-32 text-left overflow-x-hidden">
+    // Removed 'overflow-x-hidden' here so the sticky timeline works again
+    <main className="w-full pb-32 text-left">
       
-      {/* 1. Full-Bleed Cinematic Cover Image */}
+      {/* Full-Bleed Cinematic Cover Image with Scroll Indicator */}
       {caseStudy.coverImage && (
         <div className="relative w-full h-[60vh] md:h-screen mb-16 md:mb-32">
           <Image
@@ -85,16 +86,24 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
             className="object-cover"
             priority
           />
+          
+          {/* Architectural Scroll Indicator */}
+          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20 mix-blend-difference text-white">
+            <span className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-70">Scroll</span>
+            <div className="w-[1px] h-12 bg-white/30 relative overflow-hidden">
+              <div className="w-full h-[50%] bg-white absolute top-0 left-0 animate-bounce" />
+            </div>
+          </div>
         </div>
       )}
 
-      {/* 2. Edge-to-Edge Typography Header */}
+      {/* Edge-to-Edge Typography Header */}
       <header className="px-6 md:px-12 lg:px-24 mb-32">
         <h1 className="text-[12vw] md:text-[9vw] font-bold tracking-tighter leading-none mb-16 text-white uppercase">
           {caseStudy.title}
         </h1>
         
-        {/* Metadata Grid with new Description section */}
+        {/* Metadata Grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 text-gray-300 border-t border-gray-800 pt-12">
           <div className="md:col-span-3">
             <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-4 font-bold">Role</h3>
@@ -116,22 +125,20 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
 
           <div className="md:col-span-6 lg:col-span-5 lg:col-start-8">
             <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-4 font-bold">Project Description</h3>
-            {caseStudy.description ? (
+            {caseStudy.description && (
               <p className="text-lg md:text-xl leading-relaxed">{caseStudy.description}</p>
-            ) : (
-              <p className="text-sm text-gray-600 italic">Add a 'description' string field to your Sanity schema to populate this area.</p>
             )}
           </div>
         </div>
       </header>
       
-      {/* 3. Split-Screen Narrative Layout */}
+      {/* Split-Screen Narrative Layout */}
       {caseStudy.sections && caseStudy.sections.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative px-6 md:px-12 lg:px-24">
           
           {/* Sticky Timeline */}
           <aside className="lg:col-span-3">
-            <div className="sticky top-28 space-y-4">
+            <div className="sticky top-28 space-y-4 self-start">
               <h3 className="text-xs uppercase tracking-widest text-gray-500 font-bold mb-6">Index</h3>
               <nav className="flex flex-col space-y-3">
                 {caseStudy.sections.map((section: any, index: number) => (

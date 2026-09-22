@@ -1,178 +1,36 @@
-import { client } from "@/sanity/client";
-import Image from "next/image";
-import imageUrlBuilder from "@sanity/image-url";
+import { PortableText } from "next-sanity";
 import { notFound } from "next/navigation";
-import { PortableText, PortableTextComponents } from '@portabletext/react';
-import HorizontalGalleryTrack from "@/components/HorizontalGallery";
+import Link from "next/link";
+import { sanityFetch } from "@/sanity/live";
+import { ARTICLE_QUERY } from "@/sanity/queries";
 
-const builder = imageUrlBuilder(client);
-function urlFor(source: any) {
-  return builder.image(source);
-}
-
-const portableTextComponents: PortableTextComponents = {
-  block: {
-    h1: ({ children }) => <h1 className="text-4xl md:text-5xl font-bold tracking-tight mt-16 mb-8 text-white">{children}</h1>,
-    h2: ({ children }) => <h2 className="text-3xl md:text-4xl font-bold tracking-tight mt-16 mb-6 text-white">{children}</h2>,
-    h3: ({ children }) => <h3 className="text-2xl font-semibold tracking-tight mt-12 mb-4 text-white">{children}</h3>,
-    normal: ({ children }) => <p className="text-gray-300 text-lg md:text-xl leading-relaxed mb-8 max-w-3xl">{children}</p>,
-  },
-  types: {
-    image: ({ value }: { value: any }) => {
-      if (!value?.asset?._ref) return null;
-      return (
-        // Added margins, contained the width, and clamped the max-height
-        <div className="relative w-full max-w-6xl mx-auto my-24 px-4 md:px-0 flex justify-center">
-          <Image
-            src={urlFor(value).url()}
-            alt={value.alt || 'Case study image'}
-            width={1920}
-            height={1080}
-            // The max-h-[75vh] ensures the asset never dominates the entire viewport height
-            className="w-full h-auto max-h-[75vh] object-contain"
-          />
-        </div>
-      );
-    },
-    horizontalGallery: ({ value }: { value: any }) => {
-      if (!value?.images) return null;
-      return <HorizontalGalleryTrack images={value.images} />;
-    }
-  },
-};
-
-const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
-  title,
-  description,
-  role,
-  deliverables,
-  coverImage,
-  sections[]{
-    sectionTitle,
-    "sectionId": sectionId.current,
-    content[]{
-      ...,
-      _type == "horizontalGallery" => {
-        "images": images[]{
-          _key,
-          alt,
-          caption,
-          "asset": {
-            "url": asset->url
-          }
-        }
-      }
-    }
-  }
-}`;
-
-export default async function CaseStudyPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ArticlePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
-  const caseStudy = await client.fetch(CASE_STUDY_QUERY, { slug });
+  const { data: article } = await sanityFetch({
+    query: ARTICLE_QUERY,
+    params: { slug },
+  });
 
-  if (!caseStudy) notFound();
+  if (!article) return notFound();
 
   return (
-    // Removed 'overflow-x-hidden' here so the sticky timeline works again
-    <main className="w-full pb-32 text-left">
-      
-      {/* Full-Bleed Cinematic Cover Image with Scroll Indicator */}
-      {caseStudy.coverImage && (
-        <div className="relative w-full h-[60vh] md:h-screen mb-16 md:mb-32">
-          <Image
-            src={urlFor(caseStudy.coverImage).url()}
-            alt={`${caseStudy.title} cover`}
-            fill
-            className="object-cover"
-            priority
-          />
-          
-          {/* Architectural Scroll Indicator */}
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20 mix-blend-difference text-white">
-            <span className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-70">Scroll</span>
-            <div className="w-[1px] h-12 bg-white/30 relative overflow-hidden">
-              <div className="w-full h-[50%] bg-white absolute top-0 left-0 animate-bounce" />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edge-to-Edge Typography Header */}
-      <header className="px-6 md:px-12 lg:px-24 mb-32">
-        <h1 className="text-[12vw] md:text-[9vw] font-bold tracking-tighter leading-none mb-16 text-white uppercase">
-          {caseStudy.title}
-        </h1>
-        
-        {/* Metadata Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 text-gray-300 border-t border-gray-800 pt-12">
-          <div className="md:col-span-3">
-            <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-4 font-bold">Role</h3>
-            <p className="text-lg">{caseStudy.role}</p>
-          </div>
-          
-          <div className="md:col-span-3">
-            {caseStudy.deliverables && caseStudy.deliverables.length > 0 && (
-              <>
-                <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-4 font-bold">Deliverables</h3>
-                <ul className="flex flex-col gap-2">
-                  {caseStudy.deliverables.map((item: string, i: number) => (
-                    <li key={i} className="text-lg">{item}</li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </div>
-
-          <div className="md:col-span-6 lg:col-span-5 lg:col-start-8">
-            <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-4 font-bold">Project Description</h3>
-            {caseStudy.description && (
-              <p className="text-lg md:text-xl leading-relaxed">{caseStudy.description}</p>
-            )}
-          </div>
-        </div>
-      </header>
-      
-      {/* Split-Screen Narrative Layout */}
-      {caseStudy.sections && caseStudy.sections.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative px-6 md:px-12 lg:px-24">
-          
-          {/* Sticky Timeline */}
-          <aside className="lg:col-span-3">
-            <div className="sticky top-28 space-y-4 self-start">
-              <h3 className="text-xs uppercase tracking-widest text-gray-500 font-bold mb-6">Index</h3>
-              <nav className="flex flex-col space-y-3">
-                {caseStudy.sections.map((section: any, index: number) => (
-                  <a
-                    key={index}
-                    href={`#${section.sectionId || index}`}
-                    className="text-gray-500 hover:text-white transition-colors text-sm font-medium py-1"
-                  >
-                    {section.sectionTitle}
-                  </a>
-                ))}
-              </nav>
-            </div>
-          </aside>
-
-          {/* Content */}
-          <div className="lg:col-span-9 space-y-32">
-            {caseStudy.sections.map((section: any, index: number) => (
-              <section 
-                key={index} 
-                id={section.sectionId || index}
-                className="scroll-mt-28"
-              >
-                {section.content && (
-                  <PortableText 
-                    value={section.content} 
-                    components={portableTextComponents} 
-                  />
-                )}
-              </section>
-            ))}
-          </div>
-        </div>
-      )}
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-16">
+      <p>
+        <Link href="/" className="text-zinc-500 hover:text-zinc-900">
+          ← Articles
+        </Link>
+      </p>
+      <article className="flex flex-col gap-4">
+        <h1 className="text-4xl font-semibold tracking-tight">{article.title}</h1>
+        {article.author?.name ? (
+          <p className="text-zinc-600">By {article.author.name}</p>
+        ) : null}
+        {Array.isArray(article.body) ? <PortableText value={article.body} /> : null}
+      </article>
     </main>
   );
 }
