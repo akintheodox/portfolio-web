@@ -35,7 +35,7 @@ export default function HorizontalGalleryTrack({ images }: { images: ImageItem[]
         }
       `}</style>
 
-      <div className="animate-marquee flex w-max gap-2 md:gap-4 px-2 md:px-4 cursor-crosshair">
+      <div className="animate-marquee flex w-max gap-2 px-2 cursor-crosshair">
         {duplicatedImages.map((img, i) => (
           <div 
             key={`${img._key}-${i}`} 

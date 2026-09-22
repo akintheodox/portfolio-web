@@ -21,13 +21,15 @@ const portableTextComponents: PortableTextComponents = {
     image: ({ value }: { value: any }) => {
       if (!value?.asset?._ref) return null;
       return (
-        <div className="relative w-full max-w-6xl mx-auto my-24 px-4 md:px-0 flex justify-center">
+        // Removed max-w-6xl, mx-auto, and flex justify-center so it flushes left natively
+        <div className="relative w-full my-16 md:my-24">
           <Image
             src={urlFor(value).url()}
             alt={value.alt || 'Case study image'}
             width={1920}
             height={1080}
-            className="w-full h-auto max-h-[75vh] object-contain"
+            // Added object-left to snap the image to the left edge of its container
+            className="w-full h-auto max-h-[75vh] object-contain object-left"
           />
         </div>
       );
@@ -71,7 +73,6 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
   if (!caseStudy) notFound();
 
   return (
-    // overflow-x-clip solves the 100vw horizontal scrollbar without breaking position: sticky!
     <main className="w-full pb-32 text-left overflow-x-clip">
       
       {/* Full-Bleed Cinematic Cover Image with Scroll Indicator */}
