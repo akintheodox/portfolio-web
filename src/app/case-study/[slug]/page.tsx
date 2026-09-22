@@ -3,6 +3,7 @@ import Image from "next/image";
 import imageUrlBuilder from "@sanity/image-url";
 import { notFound } from "next/navigation";
 import { PortableText, PortableTextComponents } from '@portabletext/react';
+import HorizontalGalleryTrack from "@/components/HorizontalGallery"; 
 
 const builder = imageUrlBuilder(client);
 function urlFor(source: any) {
@@ -31,21 +32,25 @@ const portableTextComponents: PortableTextComponents = {
         return null;
       }
       return (
-        <div className="relative w-full my-8 rounded-lg overflow-hidden">
+        <div className="relative w-full my-8 overflow-hidden bg-[#050505] border border-white/10">
           <Image
             src={urlFor(value).url()}
             alt={value.alt || 'Case study image'}
             width={1200}
             height={800}
-            className="w-full h-auto object-cover rounded-lg"
+            className="w-full h-auto object-cover"
           />
         </div>
       );
     },
+    horizontalGallery: ({ value }: { value: any }) => {
+      if (!value?.images) return null;
+      return <HorizontalGalleryTrack images={value.images} />;
+    }
   },
 };
 
-// Updated GROQ query to fetch modular sections
+// Updated GROQ query to fetch modular sections and resolve gallery URLs
 const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
   title,
   role,
@@ -54,7 +59,19 @@ const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
   sections[]{
     sectionTitle,
     "sectionId": sectionId.current,
-    content
+    content[]{
+      ...,
+      _type == "horizontalGallery" => {
+        "images": images[]{
+          _key,
+          alt,
+          caption,
+          "asset": {
+            "url": asset->url
+          }
+        }
+      }
+    }
   }
 }`;
 
@@ -90,7 +107,7 @@ export default async function CaseStudyPage({
               <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-3 font-semibold">Deliverables</h3>
               <ul className="flex flex-wrap gap-2">
                 {caseStudy.deliverables.map((item: string, i: number) => (
-                  <li key={i} className="px-4 py-1.5 border border-gray-700 rounded-full text-sm">
+                  <li key={i} className="px-4 py-1.5 border border-gray-700 text-sm">
                     {item}
                   </li>
                 ))}
@@ -102,7 +119,7 @@ export default async function CaseStudyPage({
 
       {/* Cinematic Cover Image */}
       {caseStudy.coverImage && (
-        <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-28 bg-gray-900">
+        <div className="relative w-full aspect-video overflow-hidden mb-28 bg-[#050505] border border-white/10">
           <Image
             src={urlFor(caseStudy.coverImage).width(1920).height(1080).url()}
             alt={`${caseStudy.title} cover image`}
