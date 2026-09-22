@@ -21,14 +21,12 @@ const portableTextComponents: PortableTextComponents = {
     image: ({ value }: { value: any }) => {
       if (!value?.asset?._ref) return null;
       return (
-        // Removed max-w-6xl, mx-auto, and flex justify-center so it flushes left natively
         <div className="relative w-full my-16 md:my-24">
           <Image
             src={urlFor(value).url()}
             alt={value.alt || 'Case study image'}
             width={1920}
             height={1080}
-            // Added object-left to snap the image to the left edge of its container
             className="w-full h-auto max-h-[75vh] object-contain object-left"
           />
         </div>
@@ -75,30 +73,9 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
   return (
     <main className="w-full pb-32 text-left overflow-x-clip">
       
-      {/* Full-Bleed Cinematic Cover Image with Scroll Indicator */}
-      {caseStudy.coverImage && (
-        <div className="relative w-full h-[60vh] md:h-screen mb-16 md:mb-32">
-          <Image
-            src={urlFor(caseStudy.coverImage).url()}
-            alt={`${caseStudy.title} cover`}
-            fill
-            className="object-cover"
-            priority
-          />
-          
-          {/* Architectural Scroll Indicator */}
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20 mix-blend-difference text-white">
-            <span className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-70">Scroll</span>
-            <div className="w-[1px] h-12 bg-white/30 relative overflow-hidden">
-              <div className="w-full h-[50%] bg-white absolute top-0 left-0 animate-bounce" />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edge-to-Edge Typography Header */}
-      <header className="px-6 md:px-12 lg:px-24 mb-32">
-        <h1 className="text-[12vw] md:text-[9vw] font-bold tracking-tighter leading-none mb-16 text-white uppercase">
+      {/* 1. Sleek Typography Header First */}
+      <header className="pt-24 md:pt-32 px-6 md:px-12 lg:px-24 mb-16">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-light tracking-tight mb-12 text-white">
           {caseStudy.title}
         </h1>
         
@@ -131,7 +108,22 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
         </div>
       </header>
       
-      {/* Split-Screen Narrative Layout */}
+      {/* 2. Framed Cinematic Cover Image Second */}
+      {caseStudy.coverImage && (
+        <div className="relative w-full px-6 md:px-12 lg:px-24 mb-24 md:mb-32">
+          <div className="relative w-full aspect-video md:aspect-[21/9] border border-white/10 bg-[#050505] overflow-hidden">
+            <Image
+              src={urlFor(caseStudy.coverImage).url()}
+              alt={`${caseStudy.title} cover`}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 3. Split-Screen Narrative Layout */}
       {caseStudy.sections && caseStudy.sections.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative px-6 md:px-12 lg:px-24">
           
