@@ -21,14 +21,12 @@ const portableTextComponents: PortableTextComponents = {
     image: ({ value }: { value: any }) => {
       if (!value?.asset?._ref) return null;
       return (
-        // Added margins, contained the width, and clamped the max-height
         <div className="relative w-full max-w-6xl mx-auto my-24 px-4 md:px-0 flex justify-center">
           <Image
             src={urlFor(value).url()}
             alt={value.alt || 'Case study image'}
             width={1920}
             height={1080}
-            // The max-h-[75vh] ensures the asset never dominates the entire viewport height
             className="w-full h-auto max-h-[75vh] object-contain"
           />
         </div>
@@ -73,8 +71,8 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
   if (!caseStudy) notFound();
 
   return (
-    // Removed 'overflow-x-hidden' here so the sticky timeline works again
-    <main className="w-full pb-32 text-left">
+    // overflow-x-clip solves the 100vw horizontal scrollbar without breaking position: sticky!
+    <main className="w-full pb-32 text-left overflow-x-clip">
       
       {/* Full-Bleed Cinematic Cover Image with Scroll Indicator */}
       {caseStudy.coverImage && (

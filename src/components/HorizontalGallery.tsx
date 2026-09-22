@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React from "react";
 import Image from "next/image";
 
 interface ImageItem {
@@ -11,33 +10,35 @@ interface ImageItem {
 }
 
 export default function HorizontalGalleryTrack({ images }: { images: ImageItem[] }) {
-  const [isDragging, setIsDragging] = useState(false);
-
   if (!images || images.length === 0) return null;
 
+  // Duplicate the array to create a seamless infinite loop
   const duplicatedImages = [...images, ...images, ...images];
+  
+  // Calculate a responsive speed based on image count
+  const duration = images.length * 7; 
 
   return (
-    <div className="relative w-[100vw] left-1/2 -translate-x-1/2 my-32 overflow-hidden cursor-grab active:cursor-grabbing bg-transparent">
-      <motion.div
-        animate={isDragging ? undefined : { x: ["0%", "-33.333%"] }}
-        transition={{
-          x: {
-            ease: "linear",
-            duration: images.length * 7, 
-            repeat: Infinity,
-          }
-        }}
-        onDragStart={() => setIsDragging(true)}
-        onDragEnd={() => setIsDragging(false)}
-        drag="x"
-        dragConstraints={{ left: -10000, right: 10000 }} 
-        className="flex w-max gap-4 md:gap-8 px-4 md:px-8"
-      >
+    <div className="relative w-[100vw] left-1/2 -translate-x-1/2 my-32 overflow-hidden bg-transparent">
+      
+      {/* Native CSS injection for buttery smooth looping and pausing */}
+      <style>{`
+        @keyframes infinite-scroll-${images.length} {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-33.3333%); }
+        }
+        .animate-marquee {
+          animation: infinite-scroll-${images.length} ${duration}s linear infinite;
+        }
+        .animate-marquee:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+
+      <div className="animate-marquee flex w-max gap-2 md:gap-4 px-2 md:px-4 cursor-crosshair">
         {duplicatedImages.map((img, i) => (
           <div 
             key={`${img._key}-${i}`} 
-            // Clamped the max height to 650px so they remain elegant on large screens
             className="relative w-[85vw] md:w-[60vw] h-[50vh] md:h-[70vh] max-h-[650px] flex-shrink-0"
           >
             {img.asset?.url && (
@@ -50,7 +51,7 @@ export default function HorizontalGalleryTrack({ images }: { images: ImageItem[]
             )}
           </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }
