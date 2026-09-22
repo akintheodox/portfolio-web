@@ -45,7 +45,7 @@ export default function Homepage() {
       {/* Left Column: Case Studies */}
       <div className="relative z-10 flex-1 flex items-center justify-center p-0">
         <Link 
-          href="/case-studies"
+          href="/case-study"
           className="relative w-full h-full flex flex-col items-center justify-center bg-[#050505] hover:bg-white text-white hover:text-black border-r border-white/10 transition-colors duration-300 group overflow-hidden"
         >
           <span className="text-4xl md:text-6xl font-light tracking-tight transition-transform duration-500 group-hover:scale-105">
