@@ -3,10 +3,13 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { motion, useMotionValue, useSpring } from "framer-motion";
-import { submitBioDraft } from "./actions"; // Import our new server action
+import { submitBioDraft, getLatestApprovedBio } from "./actions";
 
 export default function Homepage() {
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // State for the live bio and the new draft
+  const [liveBio, setLiveBio] = useState("I am terrible at writing about myself. You do it.");
   const [bioDraft, setBioDraft] = useState("");
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -16,6 +19,15 @@ export default function Homepage() {
   const springConfig = { damping: 35, stiffness: 250, mass: 0.4 };
   const smoothX = useSpring(cursorX, springConfig);
   const smoothY = useSpring(cursorY, springConfig);
+
+  // Fetch the live bio on mount
+  useEffect(() => {
+    getLatestApprovedBio().then((bio) => {
+      if (bio && bio.content) {
+        setLiveBio(bio.content);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -35,7 +47,6 @@ export default function Homepage() {
       if (result.success) {
         setStatus("success");
         setBioDraft("");
-        // Reset back to idle after 3 seconds
         setTimeout(() => setStatus("idle"), 3000);
       } else {
         setStatus("error");
@@ -84,33 +95,39 @@ export default function Homepage() {
       </div>
 
       <div className="relative z-20 w-full md:w-[320px] lg:w-[400px] shrink-0 bg-[#050505] border-t md:border-t-0 md:border-l border-white/10 flex flex-col h-full">
-        <div className="p-8 md:p-12 flex flex-col h-full">
+        <div className="p-8 md:p-12 flex flex-col h-full overflow-y-auto no-scrollbar">
           
-          <header className="mb-12">
-            <h2 className="text-xs tracking-[0.3em] uppercase font-bold text-white mb-2">
-              Identity Protocol
+          <header className="mb-8 shrink-0">
+            <h2 className="text-xs tracking-[0.3em] uppercase font-bold text-white mb-4">
+              Current Identity
             </h2>
-            <p className="text-gray-500 text-sm">
-              I am terrible at writing about myself. You do it.
+            {/* The currently active, approved bio is displayed here */}
+            <p className="text-gray-300 text-lg leading-relaxed italic border-l border-white/20 pl-4">
+              "{liveBio}"
             </p>
           </header>
 
-          <textarea
-            value={bioDraft}
-            onChange={(e) => setBioDraft(e.target.value)}
-            disabled={isPending || status === "success"}
-            placeholder="Start typing..."
-            className="flex-1 w-full bg-transparent text-gray-300 text-lg leading-relaxed placeholder:text-gray-700 resize-none outline-none z-30 relative disabled:opacity-50"
-            spellCheck="false"
-          />
+          <div className="flex-1 flex flex-col min-h-[250px] border-t border-white/10 pt-8">
+            <h3 className="text-xs tracking-[0.3em] uppercase font-bold text-gray-500 mb-4">
+              Write an Override
+            </h3>
+            <textarea
+              value={bioDraft}
+              onChange={(e) => setBioDraft(e.target.value)}
+              disabled={isPending || status === "success"}
+              placeholder="Submit a new bio..."
+              className="flex-1 w-full bg-transparent text-gray-400 text-base leading-relaxed placeholder:text-gray-700 resize-none outline-none z-30 relative disabled:opacity-50"
+              spellCheck="false"
+            />
+          </div>
 
-          <div className="pt-8 border-t border-white/10 mt-auto">
+          <div className="pt-8 shrink-0 mt-4">
             <button 
               onClick={handleSubmit}
               disabled={isPending || status === "success" || !bioDraft.trim()}
               className="w-full py-4 text-xs tracking-[0.3em] uppercase font-bold text-white border border-white/20 hover:bg-white hover:text-black transition-colors duration-300 relative z-30 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-white"
             >
-              {isPending ? "Transmitting..." : status === "success" ? "Override Accepted" : status === "error" ? "Transmission Failed" : "Submit Override"}
+              {isPending ? "Transmitting..." : status === "success" ? "Sent for Review" : status === "error" ? "Transmission Failed" : "Submit Override"}
             </button>
           </div>
           

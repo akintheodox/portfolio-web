@@ -2,12 +2,11 @@
 
 import { createClient } from "next-sanity";
 
-// We create a specialized client here that includes your secure write token
 const writeClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
   apiVersion: "2024-01-01",
-  useCdn: false, // Must be false for writing
+  useCdn: false, 
   token: process.env.SANITY_API_WRITE_TOKEN,
 });
 
@@ -25,5 +24,17 @@ export async function submitBioDraft(bioContent: string) {
   } catch (error) {
     console.error("Sanity Write Error:", error);
     return { success: false, error: "Failed to submit bio." };
+  }
+}
+
+// NEW: Fetch the most recently approved bio
+export async function getLatestApprovedBio() {
+  const query = `*[_type == "bioSubmission" && isApproved == true] | order(_createdAt desc)[0]`;
+  try {
+    const bio = await writeClient.fetch(query);
+    return bio;
+  } catch (error) {
+    console.error("Failed to fetch bio:", error);
+    return null;
   }
 }
