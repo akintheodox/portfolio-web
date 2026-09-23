@@ -32,7 +32,7 @@ export async function submitBioDraft(bioContent: string) {
     // Note: On Resend's free tier, the 'to' address MUST be the email you used to sign up for Resend.
     await resend.emails.send({
       from: "Portfolio Terminal <onboarding@resend.dev>",
-      to: "your-actual-email@gmail.com", // REPLACE THIS WITH YOUR EMAIL
+      to: "akinhackz@gmail.com", // REPLACE THIS WITH YOUR EMAIL
       subject: "New Identity Protocol Override!",
       text: `Someone just wrote a new bio on your portfolio:\n\n"${bioContent.trim()}"\n\nIf it's spam, go to Sanity and uncheck 'Approved for Display'.`,
     });

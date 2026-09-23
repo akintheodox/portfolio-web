@@ -17,12 +17,19 @@ export default function RetroOSHome() {
 
   const handleSubmit = () => {
     if (!bioDraft.trim()) return;
+    
     setStatus("idle");
     startTransition(async () => {
-      const result = await submitBioDraft(bioDraft);
+      const submittedText = bioDraft.trim(); // Capture the text before we clear the input
+      
+      const result = await submitBioDraft(submittedText);
       if (result.success) {
         setStatus("success");
         setBioDraft("");
+        
+        // Instantly inject the new text into the live feed on the screen
+        setCommunityBios((prev) => [...prev, submittedText]);
+        
         setTimeout(() => setStatus("idle"), 3000);
       } else {
         setStatus("error");
