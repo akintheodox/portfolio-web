@@ -27,14 +27,14 @@ export async function submitBioDraft(bioContent: string) {
   }
 }
 
-// NEW: Fetch the most recently approved bio
-export async function getLatestApprovedBio() {
-  const query = `*[_type == "bioSubmission" && isApproved == true] | order(_createdAt desc)[0]`;
+// NEW: Fetch ALL approved bios in chronological order
+export async function getAllApprovedBios() {
+  const query = `*[_type == "bioSubmission" && isApproved == true] | order(_createdAt asc)`;
   try {
-    const bio = await writeClient.fetch(query);
-    return bio;
+    const bios = await writeClient.fetch(query);
+    return bios;
   } catch (error) {
-    console.error("Failed to fetch bio:", error);
-    return null;
+    console.error("Failed to fetch bios:", error);
+    return [];
   }
 }

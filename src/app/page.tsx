@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { motion, useMotionValue, useSpring } from "framer-motion";
-import { submitBioDraft, getLatestApprovedBio } from "./actions";
+import { submitBioDraft, getAllApprovedBios } from "./actions";
 
 export default function Homepage() {
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // State for the live bio and the new draft
-  const [liveBio, setLiveBio] = useState("I am terrible at writing about myself. You do it.");
+  // State for the community bio stream
+  const [communityBios, setCommunityBios] = useState<string[]>([]);
   const [bioDraft, setBioDraft] = useState("");
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -20,11 +20,11 @@ export default function Homepage() {
   const smoothX = useSpring(cursorX, springConfig);
   const smoothY = useSpring(cursorY, springConfig);
 
-  // Fetch the live bio on mount
+  // Fetch all approved bios on mount
   useEffect(() => {
-    getLatestApprovedBio().then((bio) => {
-      if (bio && bio.content) {
-        setLiveBio(bio.content);
+    getAllApprovedBios().then((bios) => {
+      if (bios && bios.length > 0) {
+        setCommunityBios(bios.map((b: any) => b.content));
       }
     });
   }, []);
@@ -97,25 +97,45 @@ export default function Homepage() {
       <div className="relative z-20 w-full md:w-[320px] lg:w-[400px] shrink-0 bg-[#050505] border-t md:border-t-0 md:border-l border-white/10 flex flex-col h-full">
         <div className="p-8 md:p-12 flex flex-col h-full overflow-y-auto no-scrollbar">
           
-          <header className="mb-8 shrink-0">
+          {/* Static Personal Bio */}
+          <header className="mb-10 shrink-0">
             <h2 className="text-xs tracking-[0.3em] uppercase font-bold text-white mb-4">
               Current Identity
             </h2>
-            {/* The currently active, approved bio is displayed here */}
-            <p className="text-gray-300 text-lg leading-relaxed italic border-l border-white/20 pl-4">
-              "{liveBio}"
+            <p className="text-gray-300 text-base leading-relaxed border-l border-white/20 pl-4">
+              I am a brand designer and creative director specializing in minimal, architectural visual identities. I build digital experiences that feel precise and intentional.
             </p>
           </header>
 
+          {/* Crowd-Sourced Continuation Stream */}
+          <div className="mb-8 shrink-0">
+            <h2 className="text-xs tracking-[0.3em] uppercase font-bold text-gray-500 mb-4">
+              Here's who people think I am
+            </h2>
+            {communityBios.length > 0 ? (
+              <p className="text-gray-400 text-base leading-relaxed italic">
+                {communityBios.map((bio, index) => (
+                  <span key={index} className="transition-colors hover:text-white cursor-crosshair">
+                    {bio}{" "}
+                  </span>
+                ))}
+              </p>
+            ) : (
+              <p className="text-gray-600 text-sm italic">
+                No entries yet. Be the first to add to the story.
+              </p>
+            )}
+          </div>
+
           <div className="flex-1 flex flex-col min-h-[250px] border-t border-white/10 pt-8">
             <h3 className="text-xs tracking-[0.3em] uppercase font-bold text-gray-500 mb-4">
-              Write an Override
+              Continue the story
             </h3>
             <textarea
               value={bioDraft}
               onChange={(e) => setBioDraft(e.target.value)}
               disabled={isPending || status === "success"}
-              placeholder="Submit a new bio..."
+              placeholder="Add your sentence..."
               className="flex-1 w-full bg-transparent text-gray-400 text-base leading-relaxed placeholder:text-gray-700 resize-none outline-none z-30 relative disabled:opacity-50"
               spellCheck="false"
             />
@@ -127,7 +147,7 @@ export default function Homepage() {
               disabled={isPending || status === "success" || !bioDraft.trim()}
               className="w-full py-4 text-xs tracking-[0.3em] uppercase font-bold text-white border border-white/20 hover:bg-white hover:text-black transition-colors duration-300 relative z-30 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-white"
             >
-              {isPending ? "Transmitting..." : status === "success" ? "Sent for Review" : status === "error" ? "Transmission Failed" : "Submit Override"}
+              {isPending ? "Transmitting..." : status === "success" ? "Sent for Review" : status === "error" ? "Transmission Failed" : "Submit Addition"}
             </button>
           </div>
           
