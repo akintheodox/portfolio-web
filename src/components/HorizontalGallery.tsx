@@ -1,57 +1,117 @@
 "use client";
 
-import React from "react";
+import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
+// @ts-ignore
+import imageUrlBuilder from "@sanity/image-url";
+import { client } from "@/sanity/client";
 
-interface ImageItem {
-  _key: string;
-  asset: { url: string };
-  alt?: string;
+const builder = imageUrlBuilder(client);
+function urlFor(source: any) {
+  return builder.image(source);
 }
 
-export default function HorizontalGalleryTrack({ images }: { images: ImageItem[] }) {
+export default function HorizontalGalleryTrack({ images }: { images: any[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const direction = useRef(1); 
+  
+  const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  // Smooth Auto-Scroll Logic
+  useEffect(() => {
+    const autoScroll = setInterval(() => {
+      if (scrollRef.current && !isHovered && !isDragging) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        
+        scrollRef.current.scrollLeft += 1 * direction.current;
+
+        if (scrollLeft >= scrollWidth - clientWidth - 1) {
+          direction.current = -1;
+        }
+        if (scrollLeft <= 0) {
+          direction.current = 1;
+        }
+      }
+    }, 16); 
+
+    return () => clearInterval(autoScroll);
+  }, [isHovered, isDragging]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeft(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; 
+    scrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
   if (!images || images.length === 0) return null;
 
-  // Duplicate the array to create a seamless infinite loop
-  const duplicatedImages = [...images, ...images, ...images];
-  
-  // Calculate a responsive speed based on image count
-  const duration = images.length * 7; 
-
   return (
-    <div className="relative w-[100vw] left-1/2 -translate-x-1/2 my-32 overflow-hidden bg-transparent">
-      
-      {/* Native CSS injection for buttery smooth looping and pausing */}
-      <style>{`
-        @keyframes infinite-scroll-${images.length} {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-33.3333%); }
-        }
-        .animate-marquee {
-          animation: infinite-scroll-${images.length} ${duration}s linear infinite;
-        }
-        .animate-marquee:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
+    <div 
+      ref={scrollRef}
+      className={`w-full flex overflow-x-auto gap-6 my-16 pb-6 select-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+        isDragging ? "cursor-grabbing" : "cursor-grab"
+      }`}
+      onMouseDown={handleMouseDown}
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseUp={handleMouseUp}
+      onMouseMove={handleMouseMove}
+    >
+      {images.map((img: any, idx: number) => {
+        const imageSrc = img?.asset?.url || (img?.asset?._ref ? urlFor(img).width(1200).url() : "");
+        if (!imageSrc) return null;
 
-      <div className="animate-marquee flex w-max gap-2 px-2 cursor-crosshair">
-        {duplicatedImages.map((img, i) => (
+        return (
           <div 
-            key={`${img._key}-${i}`} 
-            className="relative w-[85vw] md:w-[60vw] h-[50vh] md:h-[70vh] max-h-[650px] flex-shrink-0"
+            key={img._key || idx} 
+            className="w-[85%] md:w-[60%] shrink-0 flex flex-col gap-4"
           >
-            {img.asset?.url && (
+            {/* Image Container */}
+            <div className="relative w-full aspect-[4/3] border border-white/10 bg-[#050505] overflow-hidden group">
               <Image
-                src={img.asset.url}
-                alt={img.alt || "Gallery image"}
+                src={imageSrc}
+                alt={img.alt || `Gallery image ${idx + 1}`}
                 fill
-                className="object-contain pointer-events-none"
+                draggable={false} 
+                className="object-cover" 
               />
+            </div>
+            
+            {/* Optional Caption Annotation */}
+            {img.caption && (
+              <div className="flex items-start gap-3 pl-1 pr-4">
+                <span className="text-[10px] font-mono text-gray-600 mt-0.5">
+                  // {(idx + 1).toString().padStart(2, '0')}
+                </span>
+                <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+                  {img.caption}
+                </p>
+              </div>
             )}
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
