@@ -1,10 +1,16 @@
 import { client } from "@/sanity/client";
 import Image from "next/image";
 import Link from "next/link";
+// @ts-ignore
 import imageUrlBuilder from "@sanity/image-url";
 
-export const revalidate = 30;
-const builder = imageUrlBuilder(client);
+export const revalidate = 30; 
+
+const builder = imageUrlBuilder({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "",
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
+});
+
 function urlFor(source: any) {
   return builder.image(source);
 }
@@ -52,15 +58,15 @@ export default async function CasesIndexPage() {
             >
               <article className="flex flex-col h-full">
                 
-                {/* Image Container with B&W to Color Hover + Button Reveal */}
+                {/* Image Container with Scale Hover + Button Reveal (Grayscale Removed) */}
                 <div className="relative w-full aspect-[4/3] mb-8 bg-black border border-white/10 overflow-hidden">
                   {project.coverImage ? (
                     <Image
                       src={urlFor(project.coverImage).width(1200).height(900).url()}
                       alt={`${project.title} cover`}
                       fill
-                      priority={index < 2} // Optimizes LCP for the first row of images
-                      className="object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]"
+                      priority={index < 2}
+                      className="object-cover group-hover:scale-105 transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-800 text-sm font-medium tracking-widest uppercase">

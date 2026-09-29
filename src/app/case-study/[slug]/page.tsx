@@ -9,7 +9,11 @@ import HorizontalGalleryTrack from "@/components/HorizontalGallery";
 
 export const revalidate = 30;
 
-const builder = imageUrlBuilder(client);
+const builder = imageUrlBuilder({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "",
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
+});
+
 function urlFor(source: any) {
   return builder.image(source);
 }
@@ -22,16 +26,53 @@ const portableTextComponents: PortableTextComponents = {
     normal: ({ children }) => <p className="text-gray-300 text-base md:text-lg leading-relaxed mb-6 font-medium max-w-2xl">{children}</p>,
   },
   types: {
+    // Standard Image with Caption
     image: ({ value }: { value: any }) => {
       if (!value?.asset?._ref) return null;
       return (
-        <div className="relative w-full aspect-[4/3] md:aspect-video my-12 border border-white/10 bg-black overflow-hidden">
-          <Image
-            src={urlFor(value).width(1200).url()}
-            alt={value.alt || 'Case study image'}
-            fill
-            className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
-          />
+        <div className="my-12">
+          <div className="relative w-full aspect-[4/3] md:aspect-video border border-white/10 bg-[#050505] overflow-hidden">
+            <Image
+              src={urlFor(value).width(1200).url()}
+              alt={value.alt || 'Case study image'}
+              fill
+              className="object-cover"
+            />
+          </div>
+          {value.caption && (
+            <div className="flex items-start gap-3 mt-4 pl-1">
+              <span className="text-[10px] font-mono text-gray-600 mt-0.5">//</span>
+              <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+                {value.caption}
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    },
+    // New MP4 Video Block
+    videoBlock: ({ value }: { value: any }) => {
+      if (!value?.videoUrl) return null;
+      return (
+        <div className="my-12">
+          <div className="relative w-full aspect-[4/3] md:aspect-video border border-white/10 bg-[#050505] overflow-hidden">
+            <video
+              src={value.videoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline // Crucial for autoplaying on iOS
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {value.caption && (
+            <div className="flex items-start gap-3 mt-4 pl-1">
+              <span className="text-[10px] font-mono text-gray-600 mt-0.5">//</span>
+              <p className="text-xs font-mono uppercase tracking-widest text-gray-400">
+                {value.caption}
+              </p>
+            </div>
+          )}
         </div>
       );
     },
@@ -42,6 +83,7 @@ const portableTextComponents: PortableTextComponents = {
   },
 };
 
+// Updated GROQ Query to fetch video URLs and inline captions
 const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
   title,
   description,
@@ -53,6 +95,10 @@ const CASE_STUDY_QUERY = `*[_type == "caseStudy" && slug.current == $slug][0]{
     "sectionId": sectionId.current,
     content[]{
       ...,
+      _type == "videoBlock" => {
+        "videoUrl": videoFile.asset->url,
+        caption
+      },
       _type == "horizontalGallery" => {
         "images": images[]{
           _key,
