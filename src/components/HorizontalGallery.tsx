@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import Image from "next/image";
 // @ts-ignore
 import imageUrlBuilder from "@sanity/image-url";
 import { client } from "@/sanity/client";
@@ -79,22 +78,21 @@ export default function HorizontalGalleryTrack({ images }: { images: any[] }) {
       onMouseMove={handleMouseMove}
     >
       {images.map((img: any, idx: number) => {
-        const imageSrc = img?.asset?.url || (img?.asset?._ref ? urlFor(img).width(1200).url() : "");
+        const imageSrc = img?.asset?.url || (img?.asset?._ref ? urlFor(img).height(800).url() : "");
         if (!imageSrc) return null;
 
         return (
           <div 
             key={img._key || idx} 
-            className="w-[85%] md:w-[60%] shrink-0 flex flex-col gap-4"
+            className="shrink-0 flex flex-col gap-4"
           >
-            {/* Image Container */}
-            <div className="relative w-full aspect-[4/3] border border-white/10 bg-[#050505] overflow-hidden group">
-              <Image
+            {/* Reduced Fixed Height Container to emulate an editorial filmstrip */}
+            <div className="h-[240px] md:h-[320px] w-max border border-white/10 bg-[#050505] overflow-hidden group relative">
+              <img
                 src={imageSrc}
                 alt={img.alt || `Gallery image ${idx + 1}`}
-                fill
                 draggable={false} 
-                className="object-cover" 
+                className="h-full w-auto max-w-none pointer-events-none" 
               />
             </div>
             
